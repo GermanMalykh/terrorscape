@@ -37,7 +37,9 @@ export default defineConfig({
         // Если иконок нет, браузер может использовать favicon
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,webp,woff,woff2}'],
+        // Кэшируем все статические ресурсы при сборке для оффлайн работы
+        // По умолчанию используется стратегия CacheFirst для всех файлов из globPatterns
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,webp,woff,woff2,json,mp3}'],
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
@@ -54,13 +56,26 @@ export default defineConfig({
             },
           },
           {
+            // Кэшируем все локальные изображения для оффлайн работы
             urlPattern: /\.(?:png|jpg|jpeg|svg|webp)$/,
             handler: 'CacheFirst',
             options: {
               cacheName: 'images-cache',
               expiration: {
+                maxEntries: 200,
+                maxAgeSeconds: 60 * 60 * 24 * 365, // 1 year
+              },
+            },
+          },
+          {
+            // Кэшируем звуки для оффлайн работы
+            urlPattern: /\.(?:mp3|wav|ogg)$/,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'sounds-cache',
+              expiration: {
                 maxEntries: 100,
-                maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
+                maxAgeSeconds: 60 * 60 * 24 * 365, // 1 year
               },
             },
           },

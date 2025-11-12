@@ -34,6 +34,7 @@ export function SettingsScreen() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null)
   const [isInstalled, setIsInstalled] = useState(false)
   const [showIOSInstructions, setShowIOSInstructions] = useState(false)
+  const [showResetConfirm, setShowResetConfirm] = useState(false)
 
   const storageInfo = useMemo(() => getAllStorageSize(), [])
   const isIOSDevice = isIOS() || (isSafari() && !window.matchMedia('(display-mode: standalone)').matches)
@@ -76,8 +77,17 @@ export function SettingsScreen() {
   }
 
   const handleResetStatistics = () => {
+    setShowResetConfirm(true)
+  }
+
+  const handleResetConfirmCancel = () => {
+    setShowResetConfirm(false)
+  }
+
+  const handleResetConfirmProceed = () => {
     resetStatistics()
     resetLocalePreference()
+    setShowResetConfirm(false)
   }
 
   const handleInstall = async () => {
@@ -125,12 +135,36 @@ export function SettingsScreen() {
       </section>
 
       <section className="section-block">
-        <h2 className="section-block__title">{t('statistics.title')}</h2>
+        <h2 className="section-block__title">{t('settings.resetData', 'Сброс данных')}</h2>
         <p>{t('settings.resetStatsDescription')}</p>
         <button type="button" className="menu-button" onClick={handleResetStatistics}>
-          {t('settings.resetStats')}
+          {t('settings.resetStats', 'Сброс')}
         </button>
       </section>
+
+      {showResetConfirm && (
+        <div className="killer-hero__overlay killer-hero__overlay--confirm" role="alertdialog" aria-modal="true">
+          <div className="confirm-dialog">
+            <h3 className="confirm-dialog__title">
+              {t('settings.resetConfirmTitle', 'Сбросить данные?')}
+            </h3>
+            <p className="confirm-dialog__message">
+              {t(
+                'settings.resetConfirmMessage',
+                'Вы уверены, что хотите очистить историю партий и настройку языка? Это действие нельзя отменить.',
+              )}
+            </p>
+            <div className="confirm-dialog__actions">
+              <button type="button" className="ghost-button" onClick={handleResetConfirmCancel}>
+                {t('settings.resetConfirmCancel', 'Отмена')}
+              </button>
+              <button type="button" className="menu-button" onClick={handleResetConfirmProceed}>
+                {t('settings.resetConfirmProceed', 'Сбросить')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <section className="section-block">
         <h2 className="section-block__title">{t('settings.cache')}</h2>
@@ -178,17 +212,8 @@ export function SettingsScreen() {
       <section className="section-block">
         <h2 className="section-block__title">{t('settings.storage', 'Хранилище')}</h2>
         <p style={{ fontSize: '0.9rem', color: 'rgba(231, 225, 214, 0.75)', marginBottom: '12px' }}>
-          {t('settings.storageDescription', 'Использовано localStorage:')} <strong>{formatBytes(storageInfo.total)}</strong>
+          {t('settings.storageDescription', 'Использовано:')} <strong>{formatBytes(storageInfo.total)}</strong>
         </p>
-        {Object.keys(storageInfo.items).length > 0 && (
-          <div style={{ fontSize: '0.85rem', color: 'rgba(231, 225, 214, 0.65)' }}>
-            {Object.entries(storageInfo.items).map(([key, size]) => (
-              <div key={key} style={{ marginBottom: '4px' }}>
-                <code style={{ fontSize: '0.8rem' }}>{key}</code>: {formatBytes(size)}
-              </div>
-            ))}
-          </div>
-        )}
       </section>
     </div>
   )

@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, useRef } from 'react'
 import type { CSSProperties } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ScreenHeader } from '../components/ScreenHeader.tsx'
 import { useGame } from '../contexts/GameContext.tsx'
 import { useLanguage } from '../contexts/LanguageContext.tsx'
-import { killerProfiles, survivorProfiles } from '../data/packs'
+import { killerProfiles, survivorProfiles, soundLibrary } from '../data/packs'
+import { getAssetPath } from '../utils/paths'
 
 interface RoleSlot {
   key: string
@@ -60,6 +61,7 @@ export function GameSetupScreen() {
   const [expandedAssignSource, setExpandedAssignSource] = useState<string | null>(null)
   const [confirmMissingNames, setConfirmMissingNames] = useState(false)
   const [isMobileLayout, setIsMobileLayout] = useState(false)
+  const audioRefs = useRef<Map<string, HTMLAudioElement>>(new Map())
   useEffect(() => {
     if (typeof window === 'undefined') {
       return
@@ -354,14 +356,53 @@ useEffect(() => {
     }
   }, [selectedKiller, killerImagePresets])
 
+  const playKillerSound = (killerId: string) => {
+    const killer = killerProfiles.find((k) => k.id === killerId)
+    if (!killer || killer.signatureSounds.length === 0) {
+      return
+    }
+
+    // Берем первый звук из signatureSounds
+    const soundId = killer.signatureSounds[0]
+    const sound = soundLibrary.find((s) => s.id === soundId)
+    if (!sound) {
+      return
+    }
+
+    // Определяем категорию звука для пути
+    const category = sound.category === 'killer' ? 'killers' : sound.category
+    const audioPath = getAssetPath(`/sounds/${category}/${soundId}.mp3`)
+
+    // Останавливаем предыдущий звук, если играет
+    audioRefs.current.forEach((audio) => {
+      audio.pause()
+      audio.currentTime = 0
+    })
+
+    // Создаем или используем существующий audio элемент
+    let audio = audioRefs.current.get(soundId)
+    if (!audio) {
+      audio = new Audio(audioPath)
+      audioRefs.current.set(soundId, audio)
+    }
+
+    // Воспроизводим звук
+    audio.currentTime = 0
+    audio.play().catch((error) => {
+      console.warn('Failed to play sound:', error)
+    })
+  }
+
   const handleCycleKiller = (direction: 'prev' | 'next') => {
     if (availableKillers.length === 0) {
       return
     }
 
     if (!selectedKiller) {
-      selectKiller(availableKillers[0].id)
+      const firstKiller = availableKillers[0]
+      selectKiller(firstKiller.id)
       setStep('killer')
+      playKillerSound(firstKiller.id)
       return
     }
 
@@ -379,12 +420,21 @@ useEffect(() => {
     if (target) {
       selectKiller(target.id)
       setStep('killer')
+      playKillerSound(target.id)
     }
   }
 
   const killerLookup = useMemo(() => {
     return new Map(killerProfiles.map((killer) => [killer.id, killer]))
   }, [])
+
+  // Воспроизводим звук при первой загрузке, если убийца уже выбран
+  useEffect(() => {
+    if (selectedKiller && step === 'killer') {
+      playKillerSound(selectedKiller.id)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []) // Только при монтировании компонента
 
   const survivorLookup = useMemo(() => {
     return new Map(survivorProfiles.map((survivor) => [survivor.id, survivor]))
@@ -547,7 +597,7 @@ useEffect(() => {
                     </button>
                     <button
                       type="button"
-                      className="menu-button"
+                      className={`menu-button ${config.selectedSurvivorIds.length === maxSurvivorSlots ? 'menu-button--active' : ''}`}
                       disabled={!canProceedToRoles}
                       onClick={() => setStep('roles')}
                     >
@@ -628,7 +678,7 @@ useEffect(() => {
                                     type="button"
                                     className={`ghost-button roster-preview__assign-toggle${
                                       isMobileLayout ? ' roster-preview__assign-toggle--touch' : ''
-                                    }`}
+                                    }${nameValue.trim() ? ' roster-preview__assign-toggle--active' : ''}`}
                                     onClick={() => handleAssignToggle(slot.key)}
                                     disabled={!nameValue.trim()}
                                   >
@@ -714,7 +764,7 @@ useEffect(() => {
 
       {confirmMissingNames && (
         <div className="killer-hero__overlay killer-hero__overlay--confirm" role="alertdialog" aria-modal="true">
-          <div className="confirm-dialog">
+          <div className="confirm-dialog confirm-dialog--missing-names">
             <h3 className="confirm-dialog__title">{t('setup.missingNamesTitle', 'Не все имена заполнены')}</h3>
             <p className="confirm-dialog__message">
               {t(

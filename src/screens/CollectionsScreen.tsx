@@ -22,6 +22,9 @@ export function CollectionsScreen() {
   return (
     <div className="screen">
       <ScreenHeader title={t('collections.title')} backTo="/" />
+      <section className="section-block">
+        <p>{t('collections.description', 'Коллекции нужны для отображения новых убийц, жертв и соответствующих звуков в игре.')}</p>
+      </section>
       <div className="card-grid">
         {packDefinitions.map((pack) => {
           const isBase = pack.id === 'base'

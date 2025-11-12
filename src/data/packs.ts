@@ -53,6 +53,13 @@ export const soundLibrary: SoundAsset[] = [
     tags: ['spectre', 'base'],
   },
   {
+    id: 'werewolf_howl',
+    name: 'Вой оборотня',
+    category: 'killer',
+    description: 'Протяжный вой и рычание оборотня',
+    tags: ['werewolf', 'feral-instincts'],
+  },
+  {
     id: 'siren_blast',
     name: 'Сирена эвакуации',
     category: 'special',
@@ -61,10 +68,17 @@ export const soundLibrary: SoundAsset[] = [
   },
   {
     id: 'door_slam',
-    name: 'Хлопок двери',
+    name: 'Баррикада',
     category: 'common',
     description: 'Гулкий удар тяжёлой двери',
     tags: ['base'],
+  },
+  {
+    id: 'hammering',
+    name: 'Баррикада',
+    category: 'killer',
+    description: 'Звук забивания баррикады',
+    tags: ['butcher', 'base'],
   },
 ]
 
@@ -75,7 +89,7 @@ export const killerProfiles: KillerProfile[] = [
     codename: 'Butcher',
     description:
       'Грудая гора мышц, вооружённая бензопилой. Всегда выбирает прямой путь и не отпускает добычу.',
-    signatureSounds: ['chainsaw_roar', 'door_slam'],
+    signatureSounds: ['chainsaw_roar', 'hammering'],
     image: getAssetPath('/art/killers/butcher.webp'),
     traits: ['Шквалящий урон', 'Прямолинейная охота', 'Шумовой прессинг'],
     packLabel: {
@@ -102,7 +116,7 @@ export const killerProfiles: KillerProfile[] = [
     codename: 'Werewolf',
     description:
       'Жену Рудольфа убили соседи и после этого он превратился в истинного монстра, чья ярость больше не зависит от лунных циклов.',
-    signatureSounds: [],
+    signatureSounds: ['werewolf_howl'],
     image: getAssetPath('/art/killers/werewolf.webp'),
     traits: ['Неумолимая ярость', 'Чуткий нюх', 'Прорыв обороны'],
     packLabel: {

@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ScreenHeader } from '../components/ScreenHeader.tsx'
 import { useGame, type PlayerSlot } from '../contexts/GameContext.tsx'
 import { useLanguage } from '../contexts/LanguageContext.tsx'
 import { killerProfiles, survivorProfiles, soundLibrary } from '../data/packs'
+import { getAssetPath } from '../utils/paths'
 
 interface ActiveSound {
   id: string
@@ -156,6 +157,7 @@ export function GameConsoleScreen() {
   const navigate = useNavigate()
   const [activeSounds, setActiveSounds] = useState<ActiveSound[]>([])
   const [elapsedMs, setElapsedMs] = useState(0)
+  const audioRefs = useRef<Map<string, HTMLAudioElement>>(new Map())
   const [pendingGroup, setPendingGroup] = useState<PlayerGroup | null>(null)
   const [confirmExit, setConfirmExit] = useState(false)
   const [timerWarningDismissed, setTimerWarningDismissed] = useState(false)
@@ -258,14 +260,74 @@ export function GameConsoleScreen() {
     return categories
   }, [config.activePackIds])
 
+  const playSound = (soundId: string) => {
+    const sound = soundLibrary.find((s) => s.id === soundId)
+    if (!sound) {
+      return
+    }
+
+    // Останавливаем все текущие звуки
+    audioRefs.current.forEach((audio) => {
+      audio.pause()
+      audio.currentTime = 0
+    })
+
+    // Определяем категорию звука для пути
+    const category = sound.category === 'killer' ? 'killers' : sound.category
+    const audioPath = getAssetPath(`/sounds/${category}/${soundId}.mp3`)
+
+    // Создаем или используем существующий audio элемент
+    let audio = audioRefs.current.get(soundId)
+    if (!audio) {
+      audio = new Audio(audioPath)
+      audioRefs.current.set(soundId, audio)
+    }
+
+    // Воспроизводим звук
+    audio.currentTime = 0
+    audio.play().catch((error) => {
+      console.warn('Failed to play sound:', error)
+    })
+
+    return audio
+  }
+
   const toggleSound = (soundId: string) => {
+    // Для мясника при нажатии на chainsaw_roar или hammering воспроизводим звук
+    if (selectedKiller?.id === 'butcher' && (soundId === 'chainsaw_roar' || soundId === 'hammering')) {
+      playSound(soundId)
+      
+      // Краткая визуальная активация
+      setActiveSounds((prev) => {
+        if (prev.some((item) => item.id === soundId)) {
+          return prev
+        }
+        return [...prev, { id: soundId, startedAt: Date.now() }]
+      })
+      
+      // Сбрасываем активацию через 200мс
+      setTimeout(() => {
+        setActiveSounds((prev) => prev.filter((item) => item.id !== soundId))
+      }, 200)
+      
+      return
+    }
+
+    // Для остальных звуков: краткая визуальная активация
     setActiveSounds((prev) => {
-      const isActive = prev.some((item) => item.id === soundId)
-      if (isActive) {
-        return prev.filter((item) => item.id !== soundId)
+      if (prev.some((item) => item.id === soundId)) {
+        return prev
       }
       return [...prev, { id: soundId, startedAt: Date.now() }]
     })
+
+    // Воспроизводим звук
+    playSound(soundId)
+    
+    // Сбрасываем активацию через 200мс
+    setTimeout(() => {
+      setActiveSounds((prev) => prev.filter((item) => item.id !== soundId))
+    }, 200)
   }
 
   const handleMuteAll = () => setActiveSounds([])
@@ -381,6 +443,20 @@ export function GameConsoleScreen() {
               </div>
             </div>
           )}
+          {gameFinished && matchSummary && (
+            <div className="console-result-banner">
+              <h2>{t('console.matchFinished')}</h2>
+              <p>{matchSummary}</p>
+              <div className="console-result-banner__actions">
+                <button type="button" className="menu-button" onClick={handleStartNewGame}>
+                  {t('console.startNewGame', 'Начать новую партию')}
+                </button>
+                <button type="button" className="ghost-button" onClick={handleViewStatistics}>
+                  {t('console.viewStatistics', 'Посмотреть статистику')}
+                </button>
+              </div>
+            </div>
+          )}
         </section>
       )}
 
@@ -437,29 +513,18 @@ export function GameConsoleScreen() {
         </div>
       </section>
 
-      {gameFinished && matchSummary && (
-        <section className="section-block console-result-banner">
-          <h2>{t('console.matchFinished')}</h2>
-          <p>{matchSummary}</p>
-          <div className="console-result-banner__actions">
-            <button type="button" className="menu-button" onClick={handleStartNewGame}>
-              {t('console.startNewGame', 'Начать новую партию')}
-            </button>
-            <button type="button" className="ghost-button" onClick={handleViewStatistics}>
-              {t('console.viewStatistics', 'Посмотреть статистику')}
-            </button>
-          </div>
-        </section>
-      )}
 
       {selectedKiller && (
-        <section className="section-block">
-          <div className="console-section">
-            <div className="console-section__header">
-              <h2>{selectedKiller.name}</h2>
-              <span>{selectedKiller.codename}</span>
-            </div>
-            <div className="button-grid">
+        <>
+          <h2 className="section-block__title" style={{ marginBottom: '16px' }}>
+            {t('console.soundEffects', 'Звуковые эффекты')}
+          </h2>
+          <section className="section-block">
+            <div className="console-section">
+              <div className="console-section__header">
+                <h2>{selectedKiller.name}</h2>
+              </div>
+              <div className="button-grid">
               {selectedKiller.signatureSounds.map((soundId) => {
                 const sound = soundLibrary.find((item) => item.id === soundId)
                 if (!sound) return null
@@ -478,6 +543,7 @@ export function GameConsoleScreen() {
             </div>
           </div>
         </section>
+        </>
       )}
 
       {[...groupedSounds.entries()]
