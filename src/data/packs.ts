@@ -5,7 +5,7 @@ import type {
   SoundAsset,
   SurvivorProfile,
 } from '../types'
-import { getAssetPath } from '../utils/paths.ts'
+import { getAssetPath } from '../utils/paths'
 
 export const soundLibrary: SoundAsset[] = [
   {

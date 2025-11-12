@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useLanguage } from '../contexts/LanguageContext.tsx'
-import { getAssetPath } from '../utils/paths.ts'
+import { getAssetPath } from '../utils/paths'
 
 const titleAssets = {
   ru: getAssetPath('/art/common/title-rus.webp'),

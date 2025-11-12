@@ -2,7 +2,7 @@ import { useGame } from '../contexts/GameContext.tsx'
 import { useLanguage } from '../contexts/LanguageContext.tsx'
 import { packDefinitions } from '../data/packs'
 import { ScreenHeader } from '../components/ScreenHeader.tsx'
-import { getAssetPath } from '../utils/paths.ts'
+import { getAssetPath } from '../utils/paths'
 
 export function CollectionsScreen() {
   const { config, togglePack } = useGame()
