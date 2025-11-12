@@ -279,7 +279,7 @@ export function GameConsoleScreen() {
 
   const handleDialogClose = () => setPendingGroup(null)
 
-  const handleSurvivorOutcome = (group: PlayerGroup, result: 'win' | 'dead') => {
+  const handleSurvivorOutcome = (_group: PlayerGroup, result: 'win' | 'dead') => {
     if (gameFinished) {
       setPendingGroup(null)
       return
