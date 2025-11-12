@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useLanguage } from '../contexts/LanguageContext.tsx'
+import { getAssetPath } from '../utils/paths.ts'
 
 const titleAssets = {
-  ru: '/art/common/title-rus.webp',
-  en: '/art/common/title-eng.webp',
+  ru: getAssetPath('/art/common/title-rus.webp'),
+  en: getAssetPath('/art/common/title-eng.webp'),
 } as const
 
 interface BeforeInstallPromptEvent extends Event {

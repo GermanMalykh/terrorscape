@@ -5,6 +5,7 @@ import type {
   SoundAsset,
   SurvivorProfile,
 } from '../types'
+import { getAssetPath } from '../utils/paths.ts'
 
 export const soundLibrary: SoundAsset[] = [
   {
@@ -75,7 +76,7 @@ export const killerProfiles: KillerProfile[] = [
     description:
       'Грудая гора мышц, вооружённая бензопилой. Всегда выбирает прямой путь и не отпускает добычу.',
     signatureSounds: ['chainsaw_roar', 'door_slam'],
-    image: '/art/killers/butcher.webp',
+    image: getAssetPath('/art/killers/butcher.webp'),
     traits: ['Шквалящий урон', 'Прямолинейная охота', 'Шумовой прессинг'],
     packLabel: {
       ru: 'База',
@@ -88,7 +89,7 @@ export const killerProfiles: KillerProfile[] = [
     codename: 'Spectre',
     description: 'Существо иной природы, исчезающее в тени и обрушивающееся неожиданно.',
     signatureSounds: ['spectre_vanish', 'house_whispers'],
-    image: '/art/killers/spectre.webp',
+    image: getAssetPath('/art/killers/spectre.webp'),
     traits: ['Скрытность', 'Психологический прессинг', 'Контроль пространства'],
     packLabel: {
       ru: 'База',
@@ -102,7 +103,7 @@ export const killerProfiles: KillerProfile[] = [
     description:
       'Жену Рудольфа убили соседи и после этого он превратился в истинного монстра, чья ярость больше не зависит от лунных циклов.',
     signatureSounds: [],
-    image: '/art/killers/werewolf.webp',
+    image: getAssetPath('/art/killers/werewolf.webp'),
     traits: ['Неумолимая ярость', 'Чуткий нюх', 'Прорыв обороны'],
     packLabel: {
       ru: 'Животный инстинкт',
@@ -116,7 +117,7 @@ export const killerProfiles: KillerProfile[] = [
     description:
       'Таинственное существо, воспитанное волками. Освоив охоту с детства, она ставит капканы и люто мстит людям, забредшим в её лес.',
     signatureSounds: [],
-    image: '/art/killers/huntress.webp',
+    image: getAssetPath('/art/killers/huntress.webp'),
     traits: ['Призрачные капканы', 'Дальний бросок', 'Лесное чутьё'],
     packLabel: {
       ru: 'Животный инстинкт',
@@ -131,35 +132,35 @@ export const survivorProfiles: SurvivorProfile[] = [
     name: 'София Скотт',
     codename: 'Sophia Scott',
     description: 'Смелая, но осторожная, всегда ищет безопасный путь.',
-    image: '/art/survivors/sophia.webp',
+    image: getAssetPath('/art/survivors/sophia.webp'),
   },
   {
     id: 'johnson_nispel',
     name: 'Джонсон Ниспел',
     codename: 'Johnson Nispel',
     description: 'Выживший-прагматик, умеющий оценить риск мгновенно.',
-    image: '/art/survivors/johnson.webp',
+    image: getAssetPath('/art/survivors/johnson.webp'),
   },
   {
     id: 'marco_carven',
     name: 'Марко Карвен',
     codename: 'Marco Carven',
     description: 'Ветеран расследований сверхъестественного.',
-    image: '/art/survivors/marco.webp',
+    image: getAssetPath('/art/survivors/marco.webp'),
   },
   {
     id: 'anna_kubrick',
     name: 'Анна Кубрик',
     codename: 'Anna Kubrick',
     description: 'Хладнокровная стратег, не сдаётся без плана.',
-    image: '/art/survivors/anna.webp',
+    image: getAssetPath('/art/survivors/anna.webp'),
   },
   {
     id: 'william_hooper',
     name: 'Уильям Хупер',
     codename: 'William Hooper',
     description: 'Отважный механик, готовый закрыть любую пробоину.',
-    image: '/art/survivors/william.webp',
+    image: getAssetPath('/art/survivors/william.webp'),
   },
 ]
 

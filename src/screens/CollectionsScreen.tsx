@@ -2,6 +2,7 @@ import { useGame } from '../contexts/GameContext.tsx'
 import { useLanguage } from '../contexts/LanguageContext.tsx'
 import { packDefinitions } from '../data/packs'
 import { ScreenHeader } from '../components/ScreenHeader.tsx'
+import { getAssetPath } from '../utils/paths.ts'
 
 export function CollectionsScreen() {
   const { config, togglePack } = useGame()
@@ -9,11 +10,11 @@ export function CollectionsScreen() {
 
   const getPackCoverImage = (packId: string): string | undefined => {
     const coverMap: Record<string, string> = {
-      'base': '/art/collections/base-cover.webp',
-      'feral-instincts': '/art/collections/feral-cover.webp',
-      'amorphous-peril': '/art/collections/amorphouse-cover.webp',
-      'lethal-immortals': '/art/collections/lethal-cover.webp',
-      'putrefied-enmity': '/art/collections/putrefied-cover.webp',
+      'base': getAssetPath('/art/collections/base-cover.webp'),
+      'feral-instincts': getAssetPath('/art/collections/feral-cover.webp'),
+      'amorphous-peril': getAssetPath('/art/collections/amorphouse-cover.webp'),
+      'lethal-immortals': getAssetPath('/art/collections/lethal-cover.webp'),
+      'putrefied-enmity': getAssetPath('/art/collections/putrefied-cover.webp'),
     }
     return coverMap[packId]
   }
