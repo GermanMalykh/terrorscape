@@ -2,7 +2,7 @@
   "name": "Terrorscape",
   "short_name": "Terrorscape",
   "description": "Звуковое сопровождение для настольной игры Terrorscape",
-  "start_url": "/",
+  "start_url": "/terrorscape/",
   "display": "standalone",
   "background_color": "#0c0c0c",
   "theme_color": "#b01218",
