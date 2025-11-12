@@ -6,16 +6,25 @@ interface ScreenHeaderProps {
   subtitle?: string
   rightSlot?: ReactNode
   backTo?: string
+  onBack?: () => void
 }
 
-export function ScreenHeader({ title, subtitle, rightSlot, backTo }: ScreenHeaderProps) {
+export function ScreenHeader({ title, subtitle, rightSlot, backTo, onBack }: ScreenHeaderProps) {
   const navigate = useNavigate()
+
+  const handleBack = () => {
+    if (onBack) {
+      onBack()
+    } else if (backTo) {
+      navigate(backTo)
+    }
+  }
 
   return (
     <header className="screen-header">
       <div className="screen-header__left">
-        {backTo && (
-          <button type="button" className="ghost-button" onClick={() => navigate(backTo)} aria-label="Назад">
+        {(backTo || onBack) && (
+          <button type="button" className="ghost-button" onClick={handleBack} aria-label="Назад">
             ←
           </button>
         )}

@@ -3,7 +3,7 @@ import type {
   PackDefinition,
   ScenarioPreset,
   SoundAsset,
-  VictimProfile,
+  SurvivorProfile,
 } from '../types'
 
 export const soundLibrary: SoundAsset[] = [
@@ -28,7 +28,7 @@ export const soundLibrary: SoundAsset[] = [
     name: 'Паническое дыхание',
     category: 'common',
     description: 'Тяжёлое дыхание и подавленный крик',
-    tags: ['victims', 'base'],
+    tags: ['survivors', 'base'],
   },
   {
     id: 'lantern_click',
@@ -77,6 +77,10 @@ export const killerProfiles: KillerProfile[] = [
     signatureSounds: ['chainsaw_roar', 'door_slam'],
     image: '/art/killers/butcher.webp',
     traits: ['Шквалящий урон', 'Прямолинейная охота', 'Шумовой прессинг'],
+    packLabel: {
+      ru: 'База',
+      en: 'Base',
+    },
   },
   {
     id: 'spectre',
@@ -86,39 +90,76 @@ export const killerProfiles: KillerProfile[] = [
     signatureSounds: ['spectre_vanish', 'house_whispers'],
     image: '/art/killers/spectre.webp',
     traits: ['Скрытность', 'Психологический прессинг', 'Контроль пространства'],
+    packLabel: {
+      ru: 'База',
+      en: 'Base',
+    },
+  },
+  {
+    id: 'werewolf',
+    name: 'Оборотень',
+    codename: 'Werewolf',
+    description:
+      'Жену Рудольфа убили соседи и после этого он превратился в истинного монстра, чья ярость больше не зависит от лунных циклов.',
+    signatureSounds: [],
+    image: '/art/killers/werewolf.webp',
+    traits: ['Неумолимая ярость', 'Чуткий нюх', 'Прорыв обороны'],
+    packLabel: {
+      ru: 'Животный инстинкт',
+      en: 'Feral Instincts',
+    },
+  },
+  {
+    id: 'huntress',
+    name: 'Охотница',
+    codename: 'Huntress',
+    description:
+      'Таинственное существо, воспитанное волками. Освоив охоту с детства, она ставит капканы и люто мстит людям, забредшим в её лес.',
+    signatureSounds: [],
+    image: '/art/killers/huntress.webp',
+    traits: ['Призрачные капканы', 'Дальний бросок', 'Лесное чутьё'],
+    packLabel: {
+      ru: 'Животный инстинкт',
+      en: 'Feral Instincts',
+    },
   },
 ]
 
-export const victimProfiles: VictimProfile[] = [
+export const survivorProfiles: SurvivorProfile[] = [
   {
     id: 'sophia_scott',
     name: 'София Скотт',
     codename: 'Sophia Scott',
     description: 'Смелая, но осторожная, всегда ищет безопасный путь.',
+    image: '/art/survivors/sophia.webp',
   },
   {
     id: 'johnson_nispel',
     name: 'Джонсон Ниспел',
     codename: 'Johnson Nispel',
     description: 'Выживший-прагматик, умеющий оценить риск мгновенно.',
+    image: '/art/survivors/johnson.webp',
   },
   {
     id: 'marco_carven',
     name: 'Марко Карвен',
     codename: 'Marco Carven',
     description: 'Ветеран расследований сверхъестественного.',
+    image: '/art/survivors/marco.webp',
   },
   {
     id: 'anna_kubrick',
     name: 'Анна Кубрик',
     codename: 'Anna Kubrick',
     description: 'Хладнокровная стратег, не сдаётся без плана.',
+    image: '/art/survivors/anna.webp',
   },
   {
     id: 'william_hooper',
     name: 'Уильям Хупер',
     codename: 'William Hooper',
     description: 'Отважный механик, готовый закрыть любую пробоину.',
+    image: '/art/survivors/william.webp',
   },
 ]
 
@@ -129,7 +170,7 @@ export const packDefinitions: PackDefinition[] = [
     description: 'Основные убийцы, жертвы и атмосфера особняка.',
     includes: {
       killers: ['butcher', 'spectre'],
-      victims: [
+      survivors: [
         'sophia_scott',
         'johnson_nispel',
         'marco_carven',
@@ -143,10 +184,11 @@ export const packDefinitions: PackDefinition[] = [
   {
     id: 'feral-instincts',
     name: 'Животный инстинкт',
-    description: 'Набор «Feral Instincts». Описание будет добавлено позже.',
+    description:
+      'Домик у озера, где когда-то отдыхали туристы, теперь хранит следы ожесточённой борьбы. Местные говорят о человекоподобном волке, воющем по ночам, а внутри домика всё распорото звериными когтями.',
     includes: {
-      killers: ['butcher'],
-      victims: [],
+      killers: ['werewolf', 'huntress'],
+      survivors: [],
       sounds: ['chainsaw_roar'],
     },
     tags: ['dlc'],
@@ -155,10 +197,11 @@ export const packDefinitions: PackDefinition[] = [
   {
     id: 'amorphous-peril',
     name: 'Угроза извне',
-    description: 'Набор «Amorphous Peril». Описание будет добавлено позже.',
+    description:
+      'Заброшенная лаборатория, где таинственное растение превратилось в гигантского плотоядного монстра. Его побеги распространились по всем помещениям, превратив научный комплекс в смертельную ловушку.',
     includes: {
       killers: [],
-      victims: [],
+      survivors: [],
       sounds: [],
     },
     tags: ['dlc'],
@@ -167,10 +210,11 @@ export const packDefinitions: PackDefinition[] = [
   {
     id: 'lethal-immortals',
     name: 'Безжизненные бессмертные',
-    description: 'Набор «Lethal Immortals». Описание будет добавлено позже.',
+    description:
+      'Неприступный замок на скалистом холме, застывший во времени. Легенды гласят, что его защищают ожившие каменные воины, а хитроумные ловушки превращают замок в каменную тюрьму.',
     includes: {
       killers: [],
-      victims: [],
+      survivors: [],
       sounds: [],
     },
     tags: ['dlc'],
@@ -179,10 +223,11 @@ export const packDefinitions: PackDefinition[] = [
   {
     id: 'putrefied-enmity',
     name: 'Королева Мёртвых',
-    description: 'Набор «Putrefied Enmity». Описание будет добавлено позже.',
+    description:
+      'Древняя гробница с фресками о могущественном существе, заточенном под землёй много веков назад. В пылу исследований никто не заметил, как в недрах туннелей пробудилось что-то свирепое, жаждущее мести.',
     includes: {
       killers: [],
-      victims: [],
+      survivors: [],
       sounds: ['siren_blast'],
     },
     tags: ['dlc'],

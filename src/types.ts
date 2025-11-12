@@ -19,13 +19,18 @@ export interface KillerProfile {
   dlc?: string
   image?: string
   traits?: string[]
+  packLabel?: {
+    ru: string
+    en: string
+  }
 }
 
-export interface VictimProfile {
+export interface SurvivorProfile {
   id: string
   name: string
   codename: string
   description?: string
+  image?: string
   dlc?: string
 }
 
@@ -36,7 +41,7 @@ export interface PackDefinition {
   icon?: string
   includes: {
     killers?: string[]
-    victims?: string[]
+    survivors?: string[]
     sounds?: string[]
   }
   tags?: string[]

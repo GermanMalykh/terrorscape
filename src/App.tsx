@@ -7,6 +7,7 @@ import { GameSetupScreen } from './screens/GameSetupScreen.tsx'
 import { MainMenuScreen } from './screens/MainMenuScreen.tsx'
 import { PlayerRosterScreen } from './screens/PlayerRosterScreen.tsx'
 import { SettingsScreen } from './screens/SettingsScreen.tsx'
+import { StatisticsScreen } from './screens/StatisticsScreen.tsx'
 import './App.css'
 
 function App() {
@@ -18,6 +19,7 @@ function App() {
             <Routes>
               <Route path="/" element={<MainMenuScreen />} />
               <Route path="/collections" element={<CollectionsScreen />} />
+              <Route path="/stats" element={<StatisticsScreen />} />
               <Route path="/settings" element={<SettingsScreen />} />
               <Route path="/setup" element={<GameSetupScreen />} />
               <Route path="/console" element={<GameConsoleScreen />} />

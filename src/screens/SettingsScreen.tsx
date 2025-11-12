@@ -1,15 +1,106 @@
-import { type ChangeEvent } from 'react'
+import { type ChangeEvent, useMemo, useState, useEffect } from 'react'
 import { ScreenHeader } from '../components/ScreenHeader.tsx'
 import { useGame } from '../contexts/GameContext.tsx'
 import { useLanguage } from '../contexts/LanguageContext.tsx'
 import { locales } from '../i18n/translations.ts'
+import { getAllStorageSize } from '../utils/storage.ts'
+
+const formatBytes = (bytes: number): string => {
+  if (bytes === 0) return '0 B'
+  const k = 1024
+  const sizes = ['B', 'KB', 'MB', 'GB']
+  const i = Math.floor(Math.log(bytes) / Math.log(k))
+  return `${(bytes / Math.pow(k, i)).toFixed(2)} ${sizes[i]}`
+}
+
+// Определяем iOS устройство
+// На Android всегда вернет false
+const isIOS = () => {
+  return (
+    /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+  )
+}
+
+// Определяем Safari (не Chrome на Android)
+// На Android всегда вернет false
+const isSafari = () => {
+  return /^((?!chrome|android).)*safari/i.test(navigator.userAgent)
+}
 
 export function SettingsScreen() {
   const { resetStatistics } = useGame()
-  const { locale, setLocale, t } = useLanguage()
+  const { locale, setLocale, resetLocalePreference, t } = useLanguage()
+  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null)
+  const [isInstalled, setIsInstalled] = useState(false)
+  const [showIOSInstructions, setShowIOSInstructions] = useState(false)
+
+  const storageInfo = useMemo(() => getAllStorageSize(), [])
+  const isIOSDevice = isIOS() || (isSafari() && !window.matchMedia('(display-mode: standalone)').matches)
+
+  interface BeforeInstallPromptEvent extends Event {
+    prompt: () => Promise<void>
+    userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>
+  }
+
+  useEffect(() => {
+    // Проверяем, установлено ли приложение
+    if (window.matchMedia('(display-mode: standalone)').matches) {
+      setIsInstalled(true)
+    }
+
+    // Слушаем событие beforeinstallprompt
+    const handleBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault()
+      setDeferredPrompt(e as BeforeInstallPromptEvent)
+    }
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
+
+    // Слушаем событие appinstalled
+    const handleAppInstalled = () => {
+      setIsInstalled(true)
+      setDeferredPrompt(null)
+    }
+
+    window.addEventListener('appinstalled', handleAppInstalled)
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
+      window.removeEventListener('appinstalled', handleAppInstalled)
+    }
+  }, [])
 
   const handleLocaleChange = (event: ChangeEvent<HTMLSelectElement>) => {
     setLocale(event.target.value as typeof locale)
+  }
+
+  const handleResetStatistics = () => {
+    resetStatistics()
+    resetLocalePreference()
+  }
+
+  const handleInstall = async () => {
+    // Для iOS показываем инструкцию (на Android isIOSDevice всегда false)
+    if (isIOSDevice) {
+      setShowIOSInstructions(true)
+      // Автоматически скрываем через 5 секунд
+      setTimeout(() => setShowIOSInstructions(false), 5000)
+      return
+    }
+
+    // Для Android/Chrome и других браузеров используем стандартный prompt
+    // deferredPrompt будет доступен благодаря событию beforeinstallprompt
+    if (!deferredPrompt) {
+      return
+    }
+
+    deferredPrompt.prompt()
+    const { outcome } = await deferredPrompt.userChoice
+
+    if (outcome === 'accepted') {
+      setDeferredPrompt(null)
+    }
   }
 
   return (
@@ -18,8 +109,12 @@ export function SettingsScreen() {
       <section className="section-block">
         <h2 className="section-block__title">{t('settings.language')}</h2>
         <div className="form-field">
-          <label htmlFor="language-select">UI</label>
-          <select id="language-select" value={locale} onChange={handleLocaleChange}>
+          <select
+            id="language-select"
+            value={locale}
+            onChange={handleLocaleChange}
+            aria-label={t('settings.language')}
+          >
             {locales.map((item) => (
               <option key={item.code} value={item.code}>
                 {item.label}
@@ -30,19 +125,70 @@ export function SettingsScreen() {
       </section>
 
       <section className="section-block">
-        <h2 className="section-block__title">Статистика</h2>
+        <h2 className="section-block__title">{t('statistics.title')}</h2>
         <p>{t('settings.resetStatsDescription')}</p>
-        <button type="button" className="menu-button" onClick={resetStatistics}>
+        <button type="button" className="menu-button" onClick={handleResetStatistics}>
           {t('settings.resetStats')}
         </button>
       </section>
 
       <section className="section-block">
         <h2 className="section-block__title">{t('settings.cache')}</h2>
-        <p>Подготовка офлайн-кэша будет доступна позже. Следите за статусом в дорожной карте.</p>
-        <button type="button" className="ghost-button" disabled>
-          {t('settings.install')}
-        </button>
+        <p>
+          {isInstalled
+            ? t('settings.installed', 'Приложение установлено. Работает офлайн.')
+            : t('settings.installDescription', 'Установите приложение на устройство для работы офлайн.')}
+        </p>
+        {!isInstalled && (deferredPrompt || isIOSDevice) && (
+          <button type="button" className="menu-button" onClick={handleInstall}>
+            {t('settings.install')}
+          </button>
+        )}
+        {!isInstalled && !deferredPrompt && !isIOSDevice && (
+          <p style={{ fontSize: '0.85rem', color: 'rgba(231, 225, 214, 0.6)', marginTop: '8px' }}>
+            {t('settings.installNotAvailable', 'Установка доступна только в поддерживаемых браузерах.')}
+          </p>
+        )}
+        {showIOSInstructions && (
+          <div
+            style={{
+              marginTop: '16px',
+              backgroundColor: 'rgba(12, 12, 12, 0.95)',
+              border: '1px solid rgba(176, 18, 24, 0.5)',
+              borderRadius: '8px',
+              padding: '16px',
+              fontSize: '0.9rem',
+              color: '#e7e1d6',
+              textAlign: 'center',
+            }}
+          >
+            <p style={{ margin: '0 0 8px 0', fontWeight: 'bold' }}>
+              {t('menu.iosInstallTitle', 'Как установить на iOS')}
+            </p>
+            <p style={{ margin: '0', fontSize: '0.85rem', lineHeight: '1.4' }}>
+              {t(
+                'menu.iosInstallInstructions',
+                'Нажмите кнопку "Поделиться" внизу экрана, затем выберите "На экран «Домой»"',
+              )}
+            </p>
+          </div>
+        )}
+      </section>
+
+      <section className="section-block">
+        <h2 className="section-block__title">{t('settings.storage', 'Хранилище')}</h2>
+        <p style={{ fontSize: '0.9rem', color: 'rgba(231, 225, 214, 0.75)', marginBottom: '12px' }}>
+          {t('settings.storageDescription', 'Использовано localStorage:')} <strong>{formatBytes(storageInfo.total)}</strong>
+        </p>
+        {Object.keys(storageInfo.items).length > 0 && (
+          <div style={{ fontSize: '0.85rem', color: 'rgba(231, 225, 214, 0.65)' }}>
+            {Object.entries(storageInfo.items).map(([key, size]) => (
+              <div key={key} style={{ marginBottom: '4px' }}>
+                <code style={{ fontSize: '0.8rem' }}>{key}</code>: {formatBytes(size)}
+              </div>
+            ))}
+          </div>
+        )}
       </section>
     </div>
   )

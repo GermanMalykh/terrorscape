@@ -7,15 +7,43 @@ export function CollectionsScreen() {
   const { config, togglePack } = useGame()
   const { t } = useLanguage()
 
+  const getPackCoverImage = (packId: string): string | undefined => {
+    const coverMap: Record<string, string> = {
+      'base': '/art/collections/base-cover.webp',
+      'feral-instincts': '/art/collections/feral-cover.webp',
+      'amorphous-peril': '/art/collections/amorphouse-cover.webp',
+      'lethal-immortals': '/art/collections/lethal-cover.webp',
+      'putrefied-enmity': '/art/collections/putrefied-cover.webp',
+    }
+    return coverMap[packId]
+  }
+
   return (
     <div className="screen">
       <ScreenHeader title={t('collections.title')} backTo="/" />
       <div className="card-grid">
         {packDefinitions.map((pack) => {
-          const isActive = config.activePackIds.includes(pack.id)
           const isBase = pack.id === 'base'
+          const isActive = !isBase && config.activePackIds.includes(pack.id)
+          const cardClassName = [
+            'pack-card',
+            isActive ? 'pack-card--active' : '',
+            isBase ? 'pack-card--base' : '',
+            pack.dlc ? 'pack-card--dlc' : '',
+          ]
+            .filter(Boolean)
+            .join(' ')
+          const coverImage = getPackCoverImage(pack.id)
+          const cardStyle = coverImage
+            ? {
+                backgroundImage: `url(${coverImage})`,
+                backgroundSize: 'cover',
+                backgroundPosition: pack.dlc ? 'center 10%' : 'center',
+                backgroundRepeat: 'no-repeat',
+              }
+            : undefined
           return (
-            <div key={pack.id} className={`pack-card ${isActive ? 'pack-card--active' : ''}`}>
+            <div key={pack.id} className={cardClassName} style={cardStyle}>
               <div className="pack-card__badge">
                 {pack.dlc ? t('collections.dlc') : t('collections.base')}
               </div>
@@ -29,14 +57,13 @@ export function CollectionsScreen() {
                 ))}
               </div>
               <div className="pack-card__actions">
-                <button
-                  type="button"
-                  className="menu-button"
-                  disabled={isBase}
-                  onClick={() => !isBase && togglePack(pack.id)}
-                >
-                  {isActive ? '✓ Активно' : '+ Активировать'}
-                </button>
+                {isBase ? (
+                  <div className="pack-card__base-label">Базовый набор</div>
+                ) : (
+                  <button type="button" className="menu-button" onClick={() => togglePack(pack.id)}>
+                    {isActive ? '✓ Активно' : '+ Активировать'}
+                  </button>
+                )}
               </div>
             </div>
           )
