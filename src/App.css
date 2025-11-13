@@ -1,3 +1,11 @@
+@font-face {
+  font-family: 'Caslon Antique';
+  src: url('/fonts/caslonantique.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 .roster-preview__controls--assigned-target .ghost-button {
   pointer-events: none;
   opacity: 0.45;
@@ -81,8 +89,12 @@
 }
 
 .roster-preview__name {
-  font-size: 0.95rem;
+  font-size: 1.25rem;
   font-weight: 600;
+}
+
+.roster-preview__name--caslon {
+  font-family: 'Caslon Antique', serif;
 }
 
 .roster-preview__role {
@@ -241,6 +253,15 @@
   text-transform: uppercase;
 }
 
+.confirm-dialog__title--caslon {
+  font-family: 'Caslon Antique', serif;
+}
+
+.confirm-dialog__name--caslon {
+  font-family: 'Caslon Antique', serif;
+  font-size: 1.2rem;
+}
+
 .confirm-dialog__message {
   margin: 0;
   font-size: 0.95rem;
@@ -362,6 +383,7 @@
   display: inline-flex;
   justify-content: center;
   padding: 0;
+  min-height: 160px; /* Резервируем место заранее, чтобы меню не прыгало */
 }
 
 .menu-hero__ribbon img {
@@ -370,6 +392,9 @@
 }
 
 @media (max-width: 640px) {
+  .menu-hero__ribbon {
+    min-height: 140px; /* Резервируем место для мобильных */
+  }
   .menu-hero__ribbon--ru img {
     height: 140px;
   }
@@ -380,6 +405,10 @@
   display: flex;
   flex-direction: column;
   gap: 14px;
+}
+
+.menu-actions .menu-button {
+  font-family: 'Caslon Antique', serif;
 }
 
 .statistics-block {
@@ -546,6 +575,10 @@
   box-shadow: 0 12px 30px rgba(176, 18, 24, 0.45);
 }
 
+.menu-button--caslon {
+  font-family: 'Caslon Antique', serif;
+}
+
 .pack-card__base-label {
   width: 100%;
   padding: 16px 20px;
@@ -562,6 +595,10 @@
   justify-content: center;
   pointer-events: none;
   transition: none;
+}
+
+.pack-card__base-label--caslon {
+  font-family: 'Caslon Antique', serif;
 }
 
 .menu-button--secondary {
@@ -620,6 +657,12 @@
   border-color: rgba(176, 18, 24, 0.8);
 }
 
+.ghost-button--caslon {
+  font-family: 'Caslon Antique', serif;
+  font-size: 1.1rem;
+  word-spacing: -0.1em;
+}
+
 .screen-header {
   display: flex;
   align-items: center;
@@ -642,6 +685,10 @@
   letter-spacing: 0.08em;
 }
 
+.screen-header__title--caslon {
+  font-family: 'Caslon Antique', serif;
+}
+
 .screen-header__subtitle {
   margin: 0;
   font-size: 0.85rem;
@@ -652,6 +699,15 @@
   display: flex;
   align-items: center;
   gap: 12px;
+}
+
+.sound-toggle-button {
+  font-size: 1.25rem;
+  padding: 8px 12px;
+  min-width: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .section-block {
@@ -672,6 +728,10 @@
   letter-spacing: 0.06em;
 }
 
+.section-block__title--caslon {
+  font-family: 'Caslon Antique', serif;
+}
+
 .card-grid {
   display: grid;
   gap: 16px;
@@ -690,6 +750,24 @@
   flex-direction: column;
   gap: 10px;
   overflow: visible;
+}
+
+.pack-card__background {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 14px;
+  z-index: -1;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.pack-card__background > div {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
 }
 
 .pack-card::before {
@@ -716,7 +794,7 @@
   );
 }
 
-.pack-card > *:not(.pack-card__badge) {
+.pack-card > *:not(.pack-card__badge):not(.pack-card__background) {
   position: relative;
   z-index: 1;
 }
@@ -748,8 +826,12 @@
 }
 
 .pack-card__title {
-  font-size: 1.1rem;
+  font-size: 1.5rem;
   margin: 0;
+}
+
+.pack-card__title--caslon {
+  font-family: 'Caslon Antique', serif;
 }
 
 .pack-card__description {
@@ -950,6 +1032,11 @@
   gap: 8px;
 }
 
+.console-section__header h2.console-section__header--caslon,
+.console-section__header--caslon {
+  font-family: 'Caslon Antique', serif;
+}
+
 .console-players {
   display: flex;
   flex-direction: column;
@@ -990,8 +1077,12 @@
 
 .console-player__name {
   font-weight: 600;
-  font-size: 1.05rem;
+  font-size: 1.2rem;
   color: rgba(231, 225, 214, 0.95);
+}
+
+.console-player__name--caslon {
+  font-family: 'Caslon Antique', serif;
 }
 
 .console-player__roles {
@@ -1063,6 +1154,10 @@
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
+}
+
+.pad-button--caslon {
+  font-family: 'Caslon Antique', serif;
 }
 
 .pad-button--active {
@@ -1332,9 +1427,13 @@
   color: rgba(231, 225, 214, 0.6);
 }
 
+.killer-hero__name--caslon {
+  font-family: 'Caslon Antique', serif;
+}
+
 .killer-hero__name {
   margin: 0;
-  font-size: 1.5rem;
+  font-size: 2rem;
   letter-spacing: 0.08em;
 }
 
@@ -1541,6 +1640,11 @@
   text-transform: uppercase;
 }
 
+.killer-hero__overlay-header h3.killer-hero__overlay-header--caslon,
+.killer-hero__overlay-header--caslon {
+  font-family: 'Caslon Antique', serif;
+}
+
 .killer-hero__overlay-meta {
   font-size: 0.8rem;
   color: rgba(231, 225, 214, 0.6);
@@ -1608,8 +1712,23 @@
 
 .survivor-card__name {
   font-weight: 600;
+  font-size: 1.15rem;
   text-transform: none;
   letter-spacing: 0.01em;
+  display: inline-block;
+  line-height: 1.2;
+}
+
+@media (min-width: 641px) {
+  .survivor-card__name {
+    background: rgba(12, 12, 12, 0.75);
+    padding: 0.1rem 12px;
+    border-radius: 6px;
+  }
+}
+
+.survivor-card__name--caslon {
+  font-family: 'Caslon Antique', serif;
 }
 
 .survivor-card__overlay {
@@ -1698,14 +1817,23 @@
   }
 
   .survivor-card__art {
-    position: static;
+    position: relative;
     width: 52px;
     height: 52px;
+    flex-shrink: 0;
     border-radius: 14px;
     border: 1px solid rgba(231, 225, 214, 0.18);
     transform: none;
     transition: none;
     pointer-events: none;
+    overflow: hidden;
+  }
+
+  .survivor-card__art > div {
+    position: absolute !important;
+    inset: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
   }
 
   .survivor-card__overlay {
@@ -1714,6 +1842,11 @@
     gap: 4px;
     align-items: flex-start;
     text-align: left;
+  }
+
+  .survivor-card__name {
+    background: none;
+    padding: 0;
   }
 
   .survivor-card:hover .survivor-card__art,
@@ -1948,6 +2081,10 @@
 .roster-preview__title--overlay {
   text-align: center;
   margin-bottom: 12px;
+}
+
+.roster-preview__title--caslon {
+  font-family: 'Caslon Antique', serif;
 }
 
 .roster-preview__assigned-from {

@@ -16,6 +16,55 @@ const formatDuration = (startedAt?: number, endedAt?: number): string | null => 
 
 const ITEMS_PER_PAGE = 5
 
+// Функция для случайного выделения буквы в каждом слове красным цветом
+const renderTextWithHighlight = (text: string, seed: string) => {
+  // Простая хеш-функция для детерминированного выбора на основе текста
+  let hash = 0
+  for (let i = 0; i < seed.length; i++) {
+    hash = ((hash << 5) - hash) + seed.charCodeAt(i)
+    hash = hash & hash
+  }
+  
+  // Разбиваем на слова и разделители (пробелы и т.д.)
+  const parts = text.split(/(\s+)/)
+  let wordIndex = 0
+  
+  return parts.map((part, partIndex) => {
+    // Пропускаем пробелы и другие разделители
+    if (/^\s+$/.test(part)) {
+      return <span key={partIndex}>{part}</span>
+    }
+    
+    // Если часть - это слово
+    const letters = part.split('')
+    // Слова из менее чем 3 букв не выделяем (первая и последняя не раскрашиваются)
+    if (letters.length < 3) {
+      return <span key={partIndex}>{part}</span>
+    }
+    
+    // Выбираем случайную букву (не первую и не последнюю) на основе хеша
+    // Используем seed + wordIndex для уникальности каждого слова
+    // Доступные индексы: от 1 до letters.length - 2 (исключая первую и последнюю)
+    const wordHash = hash + wordIndex * 31
+    const availableLetters = letters.length - 2 // Количество букв между первой и последней
+    const randomIndex = 1 + (Math.abs(wordHash) % availableLetters)
+    wordIndex++
+    
+    return (
+      <span key={partIndex}>
+        {letters.map((letter, letterIndex) => (
+          <span
+            key={letterIndex}
+            style={letterIndex === randomIndex ? { color: '#b01218' } : undefined}
+          >
+            {letter}
+          </span>
+        ))}
+      </span>
+    )
+  })
+}
+
 export function StatisticsScreen() {
   const { statistics, removeStatistic } = useGame()
   const { locale, t } = useLanguage()
@@ -41,7 +90,11 @@ export function StatisticsScreen() {
 
   return (
     <div className="screen">
-      <ScreenHeader title={t('statistics.title')} backTo="/" />
+      <ScreenHeader 
+        title={renderTextWithHighlight(t('statistics.title'), 'statistics.title')} 
+        backTo="/"
+        titleClassName="screen-header__title--caslon"
+      />
 
       {statistics.length === 0 ? (
         <section className="section-block">
@@ -180,11 +233,11 @@ export function StatisticsScreen() {
                         </button>
                         <button
                           type="button"
-                          className="menu-button"
+                          className="menu-button menu-button--caslon"
                           onClick={handleDelete}
                           style={{ fontSize: '0.75rem', padding: '4px 8px', whiteSpace: 'nowrap' }}
                         >
-                          {t('statistics.deleteConfirm', 'Удалить')}
+                          {renderTextWithHighlight(t('statistics.deleteConfirm', 'Удалить'), 'statistics.deleteConfirm')}
                         </button>
                       </div>
                     ) : (
@@ -204,8 +257,11 @@ export function StatisticsScreen() {
           </div>
           {hasMore && (
             <div className="section-block__footer section-block__footer--center">
-              <button type="button" className="ghost-button" onClick={() => setShowAll(!showAll)}>
-                {showAll ? t('statistics.showLess', 'Показать меньше') : t('statistics.showAll', 'Показать все')}
+              <button type="button" className="ghost-button ghost-button--caslon" onClick={() => setShowAll(!showAll)}>
+                {showAll 
+                  ? renderTextWithHighlight(t('statistics.showLess', 'Показать меньше'), 'statistics.showLess')
+                  : renderTextWithHighlight(t('statistics.showAll', 'Показать все'), 'statistics.showAll')
+                }
               </button>
             </div>
           )}

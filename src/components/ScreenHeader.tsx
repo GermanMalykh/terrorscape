@@ -2,14 +2,15 @@ import { type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 interface ScreenHeaderProps {
-  title: string
+  title: string | ReactNode
   subtitle?: string
   rightSlot?: ReactNode
   backTo?: string
   onBack?: () => void
+  titleClassName?: string
 }
 
-export function ScreenHeader({ title, subtitle, rightSlot, backTo, onBack }: ScreenHeaderProps) {
+export function ScreenHeader({ title, subtitle, rightSlot, backTo, onBack, titleClassName }: ScreenHeaderProps) {
   const navigate = useNavigate()
 
   const handleBack = () => {
@@ -29,7 +30,7 @@ export function ScreenHeader({ title, subtitle, rightSlot, backTo, onBack }: Scr
           </button>
         )}
         <div>
-          <h1 className="screen-header__title">{title}</h1>
+          <h1 className={`screen-header__title${titleClassName ? ` ${titleClassName}` : ''}`}>{title}</h1>
           {subtitle && <p className="screen-header__subtitle">{subtitle}</p>}
         </div>
       </div>

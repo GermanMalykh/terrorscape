@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useRef } from 'react'
+import { useEffect, useMemo, useState, useRef, useCallback } from 'react'
 import type { CSSProperties } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ScreenHeader } from '../components/ScreenHeader.tsx'
@@ -6,12 +6,64 @@ import { useGame } from '../contexts/GameContext.tsx'
 import { useLanguage } from '../contexts/LanguageContext.tsx'
 import { killerProfiles, survivorProfiles, soundLibrary } from '../data/packs'
 import { getAssetPath } from '../utils/paths'
+import { getImagePaths } from '../utils/imagePaths'
+import { ProgressiveImage } from '../components/ProgressiveImage.tsx'
+import { useSoundToggle } from '../hooks/useSoundToggle.ts'
 
 interface RoleSlot {
   key: string
   type: 'killer' | 'survivor'
   label: string
   referenceId: string
+}
+
+// Функция для случайного выделения буквы в каждом слове красным цветом
+const renderTextWithHighlight = (text: string, seed: string) => {
+  // Простая хеш-функция для детерминированного выбора на основе текста
+  let hash = 0
+  for (let i = 0; i < seed.length; i++) {
+    hash = ((hash << 5) - hash) + seed.charCodeAt(i)
+    hash = hash & hash
+  }
+  
+  // Разбиваем на слова и разделители (пробелы и т.д.)
+  const parts = text.split(/(\s+)/)
+  let wordIndex = 0
+  
+  return parts.map((part, partIndex) => {
+    // Пропускаем пробелы и другие разделители
+    if (/^\s+$/.test(part)) {
+      return <span key={partIndex}>{part}</span>
+    }
+    
+    // Если часть - это слово
+    const letters = part.split('')
+    // Слова из менее чем 3 букв не выделяем (первая и последняя не раскрашиваются)
+    if (letters.length < 3) {
+      return <span key={partIndex}>{part}</span>
+    }
+    
+    // Выбираем случайную букву (не первую и не последнюю) на основе хеша
+    // Используем seed + wordIndex для уникальности каждого слова
+    // Доступные индексы: от 1 до letters.length - 2 (исключая первую и последнюю)
+    const wordHash = hash + wordIndex * 31
+    const availableLetters = letters.length - 2 // Количество букв между первой и последней
+    const randomIndex = 1 + (Math.abs(wordHash) % availableLetters)
+    wordIndex++
+    
+    return (
+      <span key={partIndex}>
+        {letters.map((letter, letterIndex) => (
+          <span
+            key={letterIndex}
+            style={letterIndex === randomIndex ? { color: '#b01218' } : undefined}
+          >
+            {letter}
+          </span>
+        ))}
+      </span>
+    )
+  })
 }
 
 export function GameSetupScreen() {
@@ -27,6 +79,7 @@ export function GameSetupScreen() {
   } = useGame()
   const { t, locale } = useLanguage()
   const navigate = useNavigate()
+  const { isSoundEnabled, toggleSound } = useSoundToggle()
   const isRussian = locale === 'ru'
 
   const availableKillers = useMemo(() => {
@@ -342,6 +395,15 @@ useEffect(() => {
     [],
   )
 
+  const killerImagePaths = useMemo(() => {
+    if (!selectedKiller?.image) {
+      return null
+    }
+    // Извлекаем путь из полного URL (убираем base URL)
+    const imagePath = selectedKiller.image.replace(import.meta.env.BASE_URL, '/')
+    return getImagePaths(imagePath)
+  }, [selectedKiller])
+
   const killerImageStyle = useMemo((): CSSProperties | undefined => {
     if (!selectedKiller?.image) {
       return undefined
@@ -349,14 +411,34 @@ useEffect(() => {
 
     const preset = killerImagePresets.get(selectedKiller.id)
     return {
-      backgroundImage: `linear-gradient(180deg, rgba(12, 12, 12, 0.1), rgba(12, 12, 12, 0.75)), url(${selectedKiller.image})`,
       backgroundPosition: preset?.position ?? 'center',
       backgroundSize: preset?.size ?? 'cover',
       backgroundRepeat: 'no-repeat',
+      position: 'relative',
     }
   }, [selectedKiller, killerImagePresets])
 
+  // Функция для остановки всех звуков
+  const stopAllSounds = useCallback(() => {
+    audioRefs.current.forEach((audio) => {
+      audio.pause()
+      audio.currentTime = 0
+    })
+  }, [])
+
+  // Останавливаем все звуки, когда звук выключен
+  useEffect(() => {
+    if (!isSoundEnabled) {
+      stopAllSounds()
+    }
+  }, [isSoundEnabled, stopAllSounds])
+
   const playKillerSound = (killerId: string) => {
+    // Не воспроизводим звук, если он выключен
+    if (!isSoundEnabled) {
+      return
+    }
+
     const killer = killerProfiles.find((k) => k.id === killerId)
     if (!killer || killer.signatureSounds.length === 0) {
       return
@@ -374,10 +456,7 @@ useEffect(() => {
     const audioPath = getAssetPath(`/sounds/${category}/${soundId}.mp3`)
 
     // Останавливаем предыдущий звук, если играет
-    audioRefs.current.forEach((audio) => {
-      audio.pause()
-      audio.currentTime = 0
-    })
+    stopAllSounds()
 
     // Создаем или используем существующий audio элемент
     let audio = audioRefs.current.get(soundId)
@@ -428,6 +507,19 @@ useEffect(() => {
     return new Map(killerProfiles.map((killer) => [killer.id, killer]))
   }, [])
 
+  // Выбираем мясника по умолчанию, если убийца не выбран
+  useEffect(() => {
+    if (!selectedKiller && availableKillers.length > 0) {
+      const butcher = availableKillers.find((k) => k.id === 'butcher')
+      if (butcher) {
+        selectKiller(butcher.id)
+      } else {
+        // Если мясник недоступен, выбираем первого доступного
+        selectKiller(availableKillers[0].id)
+      }
+    }
+  }, [selectedKiller, availableKillers, selectKiller])
+
   // Воспроизводим звук при первой загрузке, если убийца уже выбран
   useEffect(() => {
     if (selectedKiller && step === 'killer') {
@@ -449,9 +541,75 @@ useEffect(() => {
     return survivor?.image
   }
 
+  // Функция для получения путей к изображениям жертвы
+  const getSurvivorImagePaths = (survivor: { image?: string }) => {
+    if (!survivor?.image) {
+      return null
+    }
+    // Извлекаем путь из полного URL (убираем base URL)
+    const imagePath = survivor.image.replace(import.meta.env.BASE_URL, '/')
+    return getImagePaths(imagePath)
+  }
+
+  // Функция для получения путей к изображениям роли (убийца или жертва)
+  const getRoleAvatarPaths = (slot: RoleSlot) => {
+    const avatar = getRoleAvatar(slot)
+    if (!avatar) {
+      return null
+    }
+    // Извлекаем путь из полного URL (убираем base URL)
+    const imagePath = avatar.replace(import.meta.env.BASE_URL, '/')
+    return getImagePaths(imagePath)
+  }
+
   return (
     <div className="screen">
-      <ScreenHeader title={t('setup.title')} backTo="/" />
+      <ScreenHeader 
+        title={renderTextWithHighlight(t('setup.title'), 'setup.title')}
+        titleClassName="screen-header__title--caslon"
+        backTo="/"
+        rightSlot={
+          <button
+            type="button"
+            className="ghost-button sound-toggle-button"
+            onClick={toggleSound}
+            aria-label={isSoundEnabled ? 'Выключить звук' : 'Включить звук'}
+            title={isSoundEnabled ? 'Выключить звук' : 'Включить звук'}
+          >
+            {isSoundEnabled ? (
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+                <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+              </svg>
+            ) : (
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                <line x1="23" y1="9" x2="17" y2="15" />
+                <line x1="17" y1="9" x2="23" y2="15" />
+              </svg>
+            )}
+          </button>
+        }
+      />
 
       <section className="section-block killer-hero" style={heroBackgroundStyle}>
         {selectedKiller ? (
@@ -466,16 +624,45 @@ useEffect(() => {
               ‹
             </button>
             <div className="killer-hero__layout">
-              <div
-                className={`killer-hero__image killer-hero__image--${selectedKiller.id}`}
-                style={killerImageStyle}
-              />
+              {killerImagePaths ? (
+                <div
+                  className={`killer-hero__image killer-hero__image--${selectedKiller.id}`}
+                  style={killerImageStyle}
+                >
+                  <div
+                    style={{
+                      position: 'absolute',
+                      inset: 0,
+                      background: 'linear-gradient(180deg, rgba(12, 12, 12, 0.1), rgba(12, 12, 12, 0.75))',
+                      zIndex: 1,
+                    }}
+                  />
+                  <ProgressiveImage
+                    src={killerImagePaths.high}
+                    srcLow={killerImagePaths.low}
+                    style={{
+                      position: 'absolute',
+                      inset: 0,
+                      zIndex: 0,
+                    }}
+                    backgroundPosition={killerImagePresets.get(selectedKiller.id)?.position ?? 'center'}
+                    backgroundSize={killerImagePresets.get(selectedKiller.id)?.size ?? 'cover'}
+                  />
+                </div>
+              ) : (
+                <div
+                  className={`killer-hero__image killer-hero__image--${selectedKiller.id}`}
+                  style={killerImageStyle}
+                />
+              )}
               <div className="killer-hero__content">
                 <span className="killer-hero__codename">
                   {t('setup.killerLabel', isRussian ? 'Убийца' : 'Killer').toUpperCase()}
                 </span>
                 <div className="killer-hero__name-row">
-                  <h2 className="killer-hero__name">{selectedKiller.name}</h2>
+                  <h2 className="killer-hero__name killer-hero__name--caslon">
+                    {renderTextWithHighlight(selectedKiller.name, `killer:${selectedKiller.id}`)}
+                  </h2>
                   <span className="tag tag--pack">
                     {isRussian ? selectedKiller.packLabel?.ru ?? 'База' : selectedKiller.packLabel?.en ?? 'Base'}
                   </span>
@@ -500,18 +687,34 @@ useEffect(() => {
                     {isRussian ? 'Выбранные жертвы' : 'Selected Survivors'}
                   </span>
                   <div className="killer-hero__survivors-list">
-                    {selectedSurvivors.map((survivor) => (
+                    {selectedSurvivors.map((survivor) => {
+                      const survivorPaths = getSurvivorImagePaths(survivor)
+                      return (
                       <div key={survivor.id} className="killer-hero__survivor-chip">
                         <span
                           className="killer-hero__survivor-chip-avatar"
-                          style={survivor.image ? { backgroundImage: `url(${survivor.image})` } : undefined}
+                          style={survivorPaths ? { position: 'relative', overflow: 'hidden' } : undefined}
                           aria-hidden="true"
-                        />
+                        >
+                          {survivorPaths && (
+                            <ProgressiveImage
+                              src={survivorPaths.high}
+                              srcLow={survivorPaths.low}
+                              style={{
+                                position: 'absolute',
+                                inset: 0,
+                              }}
+                              backgroundSize="cover"
+                              backgroundPosition="center"
+                            />
+                          )}
+                        </span>
                         <span className="killer-hero__survivor-chip-name">
                           {isRussian ? survivor.name : survivor.codename}
                         </span>
                       </div>
-                    ))}
+                      )
+                    })}
                     {Array.from({ length: survivorPlaceholderCount }).map((_, index) => (
                       <div
                         key={`survivor-placeholder-${index}`}
@@ -529,11 +732,11 @@ useEffect(() => {
                 <div className="killer-hero__actions">
                   <button
                     type="button"
-                    className="menu-button"
+                    className="menu-button menu-button--caslon"
                     onClick={() => setStep('survivors')}
                     disabled={!canProceedToSurvivors}
                   >
-                    {t('setup.openSurvivors')}
+                    {renderTextWithHighlight(t('setup.openSurvivors'), 'setup.openSurvivors')}
                   </button>
                 </div>
               </div>
@@ -551,7 +754,9 @@ useEffect(() => {
               <div className="killer-hero__overlay" role="dialog" aria-modal="true">
                 <div className="killer-hero__overlay-content">
                   <div className="killer-hero__overlay-header">
-                    <h3>{t('setup.survivors')}</h3>
+                    <h3 className="killer-hero__overlay-header--caslon">
+                      {renderTextWithHighlight(t('setup.survivors'), 'setup.survivors')}
+                    </h3>
                     <span className="killer-hero__overlay-meta">
                       {t('setup.survivorSlots')} {config.selectedSurvivorIds.length}/{maxSurvivorSlots}
                     </span>
@@ -570,16 +775,31 @@ useEffect(() => {
                           }`}
                           onClick={() => handleToggleSurvivor(survivor.id)}
                           disabled={isDisabled}
-                          style={
-                            survivor.image
-                              ? ({ '--survivor-art-image': `url(${survivor.image})` } as CSSProperties)
-                              : undefined
-                          }
+                          style={{ position: 'relative' }}
                         >
-                          <div className="survivor-card__art" aria-hidden="true" />
+                          <div className="survivor-card__art" aria-hidden="true">
+                            {(() => {
+                              const survivorPaths = getSurvivorImagePaths(survivor)
+                              return survivorPaths ? (
+                                <ProgressiveImage
+                                  src={survivorPaths.high}
+                                  srcLow={survivorPaths.low}
+                                  style={{
+                                    position: 'absolute',
+                                    inset: 0,
+                                  }}
+                                  backgroundSize="cover"
+                                  backgroundPosition="center"
+                                />
+                              ) : null
+                            })()}
+                          </div>
                           <div className="survivor-card__overlay">
-                            <span className="survivor-card__name">
-                              {isRussian ? survivor.name : survivor.codename}
+                            <span className="survivor-card__name survivor-card__name--caslon">
+                              {renderTextWithHighlight(
+                                isRussian ? survivor.name : survivor.codename,
+                                `survivor-${survivor.id}-name`
+                              )}
                             </span>
                           </div>
                         </button>
@@ -597,11 +817,11 @@ useEffect(() => {
                     </button>
                     <button
                       type="button"
-                      className={`menu-button ${config.selectedSurvivorIds.length === maxSurvivorSlots ? 'menu-button--active' : ''}`}
+                      className={`menu-button menu-button--caslon ${config.selectedSurvivorIds.length === maxSurvivorSlots ? 'menu-button--active' : ''}`}
                       disabled={!canProceedToRoles}
                       onClick={() => setStep('roles')}
                     >
-                      {t('setup.openRoles')}
+                      {renderTextWithHighlight(t('setup.openRoles'), 'setup.openRoles')}
                     </button>
                   </div>
                 </div>
@@ -611,7 +831,9 @@ useEffect(() => {
             {step === 'roles' && (
               <div className="killer-hero__overlay killer-hero__overlay--roles" role="dialog" aria-modal="true">
                 <div className="killer-hero__overlay-content killer-hero__overlay-content--roles">
-                  <h3 className="roster-preview__title roster-preview__title--overlay">{t('setup.roles')}</h3>
+                  <h3 className="roster-preview__title roster-preview__title--overlay roster-preview__title--caslon">
+                    {renderTextWithHighlight(t('setup.roles'), 'setup.roles')}
+                  </h3>
                   <div className="roster-preview__list">
                     {roleSlots.length === 0 ? (
                       <div className="empty-state">
@@ -619,7 +841,7 @@ useEffect(() => {
                       </div>
                     ) : (
                       roleSlots.map((slot) => {
-                        const avatar = getRoleAvatar(slot)
+                        const avatarPaths = getRoleAvatarPaths(slot)
                         const isKiller = slot.type === 'killer'
                         const assignableTargets = roleSlots.filter(
                           (other) => other.type === 'survivor' && other.key !== slot.key,
@@ -638,11 +860,26 @@ useEffect(() => {
                             <div className="roster-preview__info">
                               <span
                                 className="roster-preview__icon"
-                                style={avatar ? { backgroundImage: `url(${avatar})` } : undefined}
+                                style={avatarPaths ? { position: 'relative', overflow: 'hidden' } : undefined}
                                 aria-hidden="true"
-                              />
+                              >
+                                {avatarPaths && (
+                                  <ProgressiveImage
+                                    src={avatarPaths.high}
+                                    srcLow={avatarPaths.low}
+                                    style={{
+                                      position: 'absolute',
+                                      inset: 0,
+                                    }}
+                                    backgroundSize="cover"
+                                    backgroundPosition="center"
+                                  />
+                                )}
+                              </span>
                               <div className="roster-preview__meta">
-                                <span className="roster-preview__name">{slot.label}</span>
+                                <span className="roster-preview__name roster-preview__name--caslon">
+                                  {renderTextWithHighlight(slot.label, `role-${slot.key}-name`)}
+                                </span>
                                 <span className="roster-preview__role">
                                   {isKiller ? t('setup.killer') : t('setup.survivorSingular')}
                                 </span>
@@ -721,8 +958,8 @@ useEffect(() => {
                     <button type="button" className="ghost-button" onClick={() => setStep('survivors')}>
                       {t('setup.backToSurvivors')}
                     </button>
-                    <button type="button" className="menu-button" disabled={!canStart} onClick={handleBegin}>
-                      {t('setup.start')}
+                    <button type="button" className="menu-button menu-button--caslon" disabled={!canStart} onClick={handleBegin}>
+                      {renderTextWithHighlight(t('setup.start'), 'setup.start')}
                     </button>
                   </div>
                 </div>
@@ -747,7 +984,12 @@ useEffect(() => {
       </section>
 
       <section className="section-block">
-        <h2 className="section-block__title">Активные коллекции</h2>
+        <h2 className="section-block__title section-block__title--caslon">
+          {renderTextWithHighlight(
+            locale === 'ru' ? 'Активные коллекции' : t('setup.activeCollections', 'Active Collections'),
+            'setup.activeCollections'
+          )}
+        </h2>
         <div className="tag-strip">
           {activePacks.map((pack) => (
             <span key={pack.id} className="tag">
@@ -756,8 +998,8 @@ useEffect(() => {
           ))}
         </div>
         <div className="section-block__footer section-block__footer--left">
-          <button type="button" className="ghost-button" onClick={() => navigate('/collections')}>
-            {t('menu.collections')}
+          <button type="button" className="ghost-button ghost-button--caslon" onClick={() => navigate('/collections')}>
+            {renderTextWithHighlight(t('menu.collections'), 'menu.collections')}
           </button>
         </div>
       </section>
@@ -765,7 +1007,9 @@ useEffect(() => {
       {confirmMissingNames && (
         <div className="killer-hero__overlay killer-hero__overlay--confirm" role="alertdialog" aria-modal="true">
           <div className="confirm-dialog confirm-dialog--missing-names">
-            <h3 className="confirm-dialog__title">{t('setup.missingNamesTitle', 'Не все имена заполнены')}</h3>
+            <h3 className="confirm-dialog__title confirm-dialog__title--caslon">
+              {renderTextWithHighlight(t('setup.missingNamesTitle', 'Не все имена заполнены'), 'setup.missingNamesTitle')}
+            </h3>
             <p className="confirm-dialog__message">
               {t(
                 'setup.missingNamesMessage',
@@ -783,8 +1027,8 @@ useEffect(() => {
               <button type="button" className="ghost-button" onClick={handleConfirmMissingNamesCancel}>
                 {t('setup.missingNamesCancel', 'Заполнить имена')}
               </button>
-              <button type="button" className="menu-button" onClick={handleConfirmMissingNamesProceed}>
-                {t('setup.missingNamesProceed', 'Продолжить без имён')}
+              <button type="button" className="menu-button menu-button--caslon" onClick={handleConfirmMissingNamesProceed}>
+                {renderTextWithHighlight(t('setup.missingNamesProceed', 'Продолжить без имён'), 'setup.missingNamesProceed')}
               </button>
             </div>
           </div>

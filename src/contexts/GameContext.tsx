@@ -72,7 +72,7 @@ interface PersistentGameData {
 
 const createDefaultConfig = (): GameConfig => ({
   activePackIds: ['base'],
-  selectedKillerId: 'spectre',
+  selectedKillerId: 'butcher',
   selectedSurvivorIds: [],
   players: [],
 })

@@ -1,11 +1,16 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useLanguage } from '../contexts/LanguageContext.tsx'
-import { getAssetPath } from '../utils/paths'
+import { getImagePaths } from '../utils/imagePaths'
+import { ProgressiveImg } from '../components/ProgressiveImg.tsx'
+
+// Вычисляем пути один раз при загрузке модуля, чтобы избежать повторных вычислений
+const titleRusPaths = getImagePaths('/art/common/title-rus.webp')
+const titleEngPaths = getImagePaths('/art/common/title-eng.webp')
 
 const titleAssets = {
-  ru: getAssetPath('/art/common/title-rus.webp'),
-  en: getAssetPath('/art/common/title-eng.webp'),
+  ru: { high: titleRusPaths.high, low: titleRusPaths.low },
+  en: { high: titleEngPaths.high, low: titleEngPaths.low },
 } as const
 
 interface BeforeInstallPromptEvent extends Event {
@@ -28,13 +33,62 @@ const isSafari = () => {
   return /^((?!chrome|android).)*safari/i.test(navigator.userAgent)
 }
 
+// Функция для случайного выделения буквы в каждом слове красным цветом
+const renderMenuTextWithHighlight = (text: string, seed: string) => {
+  // Простая хеш-функция для детерминированного выбора на основе текста
+  let hash = 0
+  for (let i = 0; i < seed.length; i++) {
+    hash = ((hash << 5) - hash) + seed.charCodeAt(i)
+    hash = hash & hash
+  }
+  
+  // Разбиваем на слова и разделители (пробелы и т.д.)
+  const parts = text.split(/(\s+)/)
+  let wordIndex = 0
+  
+  return parts.map((part, partIndex) => {
+    // Пропускаем пробелы и другие разделители
+    if (/^\s+$/.test(part)) {
+      return <span key={partIndex}>{part}</span>
+    }
+    
+    // Если часть - это слово
+    const letters = part.split('')
+    // Слова из менее чем 3 букв не выделяем (первая и последняя не раскрашиваются)
+    if (letters.length < 3) {
+      return <span key={partIndex}>{part}</span>
+    }
+    
+    // Выбираем случайную букву (не первую и не последнюю) на основе хеша
+    // Используем seed + wordIndex для уникальности каждого слова
+    // Доступные индексы: от 1 до letters.length - 2 (исключая первую и последнюю)
+    const wordHash = hash + wordIndex * 31
+    const availableLetters = letters.length - 2 // Количество букв между первой и последней
+    const randomIndex = 1 + (Math.abs(wordHash) % availableLetters)
+    wordIndex++
+    
+    return (
+      <span key={partIndex}>
+        {letters.map((letter, letterIndex) => (
+          <span
+            key={letterIndex}
+            style={letterIndex === randomIndex ? { color: '#b01218' } : undefined}
+          >
+            {letter}
+          </span>
+        ))}
+      </span>
+    )
+  })
+}
+
 export function MainMenuScreen() {
   const { t, locale } = useLanguage()
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null)
   const [isInstalled, setIsInstalled] = useState(false)
   const [showIOSInstructions, setShowIOSInstructions] = useState(false)
 
-  const titleImage = titleAssets[locale as keyof typeof titleAssets] ?? titleAssets.en
+  const titleImagePaths = titleAssets[locale as keyof typeof titleAssets] ?? titleAssets.en
   const isRussian = locale === 'ru'
   const isIOSDevice = isIOS() || (isSafari() && !window.matchMedia('(display-mode: standalone)').matches)
 
@@ -104,21 +158,25 @@ export function MainMenuScreen() {
           <div
             className={`menu-hero__ribbon${isRussian ? ' menu-hero__ribbon--ru' : ''}`}
           >
-            <img src={titleImage} alt={t('menu.title')} />
+            <ProgressiveImg 
+              src={titleImagePaths.high} 
+              srcLow={titleImagePaths.low} 
+              alt={t('menu.title')} 
+            />
           </div>
         </div>
         <nav className="menu-actions">
           <Link className="menu-button" to="/setup">
-            {t('menu.newGame')}
+            {renderMenuTextWithHighlight(t('menu.newGame'), 'menu.newGame')}
           </Link>
           <Link className="menu-button" to="/collections">
-            {t('menu.collections')}
+            {renderMenuTextWithHighlight(t('menu.collections'), 'menu.collections')}
           </Link>
           <Link className="menu-button" to="/stats">
-            {t('menu.statistics')}
+            {renderMenuTextWithHighlight(t('menu.statistics'), 'menu.statistics')}
           </Link>
           <Link className="menu-button" to="/settings">
-            {t('menu.settings')}
+            {renderMenuTextWithHighlight(t('menu.settings'), 'menu.settings')}
           </Link>
         </nav>
         <footer className="menu-footer">

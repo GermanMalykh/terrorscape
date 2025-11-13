@@ -30,6 +30,55 @@ const formatElapsed = (ms: number): string => {
   return `${hourPart}${minutePart}:${String(seconds).padStart(2, '0')}`
 }
 
+// Функция для случайного выделения буквы в каждом слове красным цветом
+const renderTextWithHighlight = (text: string, seed: string) => {
+  // Простая хеш-функция для детерминированного выбора на основе текста
+  let hash = 0
+  for (let i = 0; i < seed.length; i++) {
+    hash = ((hash << 5) - hash) + seed.charCodeAt(i)
+    hash = hash & hash
+  }
+  
+  // Разбиваем на слова и разделители (пробелы и т.д.)
+  const parts = text.split(/(\s+)/)
+  let wordIndex = 0
+  
+  return parts.map((part, partIndex) => {
+    // Пропускаем пробелы и другие разделители
+    if (/^\s+$/.test(part)) {
+      return <span key={partIndex}>{part}</span>
+    }
+    
+    // Если часть - это слово
+    const letters = part.split('')
+    // Слова из менее чем 3 букв не выделяем (первая и последняя не раскрашиваются)
+    if (letters.length < 3) {
+      return <span key={partIndex}>{part}</span>
+    }
+    
+    // Выбираем случайную букву (не первую и не последнюю) на основе хеша
+    // Используем seed + wordIndex для уникальности каждого слова
+    // Доступные индексы: от 1 до letters.length - 2 (исключая первую и последнюю)
+    const wordHash = hash + wordIndex * 31
+    const availableLetters = letters.length - 2 // Количество букв между первой и последней
+    const randomIndex = 1 + (Math.abs(wordHash) % availableLetters)
+    wordIndex++
+    
+    return (
+      <span key={partIndex}>
+        {letters.map((letter, letterIndex) => (
+          <span
+            key={letterIndex}
+            style={letterIndex === randomIndex ? { color: '#b01218' } : undefined}
+          >
+            {letter}
+          </span>
+        ))}
+      </span>
+    )
+  })
+}
+
 const buildPlayerGroups = (
   players: PlayerSlot[],
   options: {
@@ -420,7 +469,11 @@ export function GameConsoleScreen() {
 
   return (
     <div className="screen">
-      <ScreenHeader title={t('console.title')} onBack={handleBack} />
+      <ScreenHeader 
+        title={renderTextWithHighlight(t('console.title'), 'console.title')} 
+        titleClassName="screen-header__title--caslon"
+        onBack={handleBack} 
+      />
 
       {state.startedAt && (
         <section className="section-block">
@@ -434,8 +487,8 @@ export function GameConsoleScreen() {
                 {t('console.timerStoppedWarning', 'Таймер остановился после перезагрузки страницы. Время не будет учитываться.')}
               </p>
               <div className="timer-warning__actions">
-                <button type="button" className="menu-button" onClick={handleStartNewGame}>
-                  {t('console.startNewGame', 'Начать новую партию')}
+                <button type="button" className="menu-button menu-button--caslon" onClick={handleStartNewGame}>
+                  {renderTextWithHighlight(t('console.startNewGame', 'Начать новую партию'), 'console.startNewGame')}
                 </button>
                 <button type="button" className="ghost-button" onClick={handleContinueWithoutTimer}>
                   {t('console.continueWithoutTimer', 'Продолжить без отслеживания времени')}
@@ -448,8 +501,8 @@ export function GameConsoleScreen() {
               <h2>{t('console.matchFinished')}</h2>
               <p>{matchSummary}</p>
               <div className="console-result-banner__actions">
-                <button type="button" className="menu-button" onClick={handleStartNewGame}>
-                  {t('console.startNewGame', 'Начать новую партию')}
+                <button type="button" className="menu-button menu-button--caslon" onClick={handleStartNewGame}>
+                  {renderTextWithHighlight(t('console.startNewGame', 'Начать новую партию'), 'console.startNewGame')}
                 </button>
                 <button type="button" className="ghost-button" onClick={handleViewStatistics}>
                   {t('console.viewStatistics', 'Посмотреть статистику')}
@@ -463,7 +516,9 @@ export function GameConsoleScreen() {
       <section className="section-block">
         <div className="console-section">
           <div className="console-section__header">
-            <h2>{t('console.playersTitle')}</h2>
+            <h2 className="console-section__header--caslon">
+              {renderTextWithHighlight(t('console.playersTitle'), 'console.playersTitle')}
+            </h2>
           </div>
           <div className="console-players">
             {playerGroups.length > 0 ? (
@@ -493,7 +548,9 @@ export function GameConsoleScreen() {
                         </div>
                       )}
                       <div className="console-player__info">
-                        <span className="console-player__name">{group.name}</span>
+                        <span className="console-player__name console-player__name--caslon">
+                          {renderTextWithHighlight(group.name, `player-${group.id}-name`)}
+                        </span>
                         {group.roles.length > 0 && (
                           <span className="console-player__roles">{group.roles.join(', ')}</span>
                         )}
@@ -516,13 +573,15 @@ export function GameConsoleScreen() {
 
       {selectedKiller && (
         <>
-          <h2 className="section-block__title" style={{ marginBottom: '16px' }}>
-            {t('console.soundEffects', 'Звуковые эффекты')}
+          <h2 className="section-block__title section-block__title--caslon" style={{ marginBottom: '16px' }}>
+            {renderTextWithHighlight(t('console.soundEffects', 'Звуковые эффекты'), 'console.soundEffects')}
           </h2>
           <section className="section-block">
             <div className="console-section">
               <div className="console-section__header">
-                <h2>{selectedKiller.name}</h2>
+                <h2 className="console-section__header--caslon">
+                  {renderTextWithHighlight(selectedKiller.name, `killer-${selectedKiller.id}-console-name`)}
+                </h2>
               </div>
               <div className="button-grid">
               {selectedKiller.signatureSounds.map((soundId) => {
@@ -533,10 +592,10 @@ export function GameConsoleScreen() {
                   <button
                     key={sound.id}
                     type="button"
-                    className={`pad-button ${isActive ? 'pad-button--active' : ''}`}
+                    className={`pad-button pad-button--caslon ${isActive ? 'pad-button--active' : ''}`}
                     onClick={() => toggleSound(sound.id)}
                   >
-                    {sound.name}
+                    {renderTextWithHighlight(sound.name, `sound-${sound.id}-name`)}
                   </button>
                 )
               })}
@@ -552,7 +611,9 @@ export function GameConsoleScreen() {
           <section key={category} className="section-block">
             <div className="console-section">
               <div className="console-section__header">
-                <h2>{category.toUpperCase()}</h2>
+                <h2 className="console-section__header--caslon">
+                  {renderTextWithHighlight(category.toUpperCase(), `category-${category}`)}
+                </h2>
               </div>
               <div className="button-grid">
                 {sounds.map((sound) => {
@@ -561,10 +622,10 @@ export function GameConsoleScreen() {
                     <button
                       key={sound.id}
                       type="button"
-                      className={`pad-button ${isActive ? 'pad-button--active' : ''}`}
+                      className={`pad-button pad-button--caslon ${isActive ? 'pad-button--active' : ''}`}
                       onClick={() => toggleSound(sound.id)}
                     >
-                      {sound.name}
+                      {renderTextWithHighlight(sound.name, `sound-${sound.id}-name`)}
                     </button>
                   )
                 })}
@@ -592,10 +653,10 @@ export function GameConsoleScreen() {
         <div className="console-result-dialog" role="dialog" aria-modal="true">
           <div className="console-result-dialog__backdrop" onClick={handleDialogClose} />
           <div className="console-result-dialog__panel">
-            <h3>
+            <h3 className="confirm-dialog__title confirm-dialog__title--caslon">
               {pendingGroup.type === 'killer'
-                ? t('console.finishPromptKiller')
-                : t('console.finishPromptSurvivor')}
+                ? renderTextWithHighlight(t('console.finishPromptKiller'), 'console.finishPromptKiller')
+                : renderTextWithHighlight(t('console.finishPromptSurvivor'), 'console.finishPromptSurvivor')}
             </h3>
             <p>
               <strong>{pendingGroup.name}</strong>
@@ -606,10 +667,10 @@ export function GameConsoleScreen() {
                 <>
                   <button
                     type="button"
-                    className="menu-button"
+                    className="menu-button menu-button--caslon"
                     onClick={() => handleSurvivorOutcome(pendingGroup, 'win')}
                   >
-                    {t('console.playerWinOption')}
+                    {renderTextWithHighlight(t('console.playerWinOption'), 'console.playerWinOption')}
                   </button>
                   <button
                     type="button"
@@ -623,10 +684,10 @@ export function GameConsoleScreen() {
                 <>
                   <button
                     type="button"
-                    className="menu-button"
+                    className="menu-button menu-button--caslon"
                     onClick={() => handleKillerOutcome('win')}
                   >
-                    {t('console.killerWinOption')}
+                    {renderTextWithHighlight(t('console.killerWinOption'), 'console.killerWinOption')}
                   </button>
                   <button
                     type="button"
@@ -648,8 +709,8 @@ export function GameConsoleScreen() {
       {confirmExit && (
         <div className="killer-hero__overlay killer-hero__overlay--confirm" role="alertdialog" aria-modal="true">
           <div className="confirm-dialog">
-            <h3 className="confirm-dialog__title">
-              {t('console.exitConfirmTitle', 'Выйти из партии?')}
+            <h3 className="confirm-dialog__title confirm-dialog__title--caslon">
+              {renderTextWithHighlight(t('console.exitConfirmTitle', 'Выйти из партии?'), 'console.exitConfirmTitle')}
             </h3>
             <p className="confirm-dialog__message">
               {t(
@@ -661,8 +722,8 @@ export function GameConsoleScreen() {
               <button type="button" className="ghost-button" onClick={handleConfirmExitCancel}>
                 {t('console.exitConfirmCancel', 'Остаться')}
               </button>
-              <button type="button" className="menu-button" onClick={handleConfirmExitProceed}>
-                {t('console.exitConfirmProceed', 'Выйти')}
+              <button type="button" className="menu-button menu-button--caslon" onClick={handleConfirmExitProceed}>
+                {renderTextWithHighlight(t('console.exitConfirmProceed', 'Выйти'), 'console.exitConfirmProceed')}
               </button>
             </div>
           </div>

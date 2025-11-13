@@ -39,7 +39,7 @@ export default defineConfig({
       workbox: {
         // Кэшируем все статические ресурсы при сборке для оффлайн работы
         // По умолчанию используется стратегия CacheFirst для всех файлов из globPatterns
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,webp,woff,woff2,json,mp3}'],
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,webp,woff,woff2,otf,ttf,json,mp3}'],
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
