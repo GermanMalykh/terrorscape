@@ -32,13 +32,6 @@ export function ProgressiveImg({
 
   const lowSrc = srcLow || src
 
-  // Приоритет: high-версия всегда важнее. Если она загрузилась - используем её.
-  // Low-версия используется ТОЛЬКО если high ещё не загрузилась или произошла ошибка.
-  // Fallback: если low ещё не загрузилась, показываем high сразу
-  const currentSrc = highImageLoaded && !imageError 
-    ? src 
-    : (lowImageLoaded && lowSrc ? lowSrc : src)
-
   useEffect(() => {
     // Уникальный ключ для отслеживания текущего изображения
     const currentImageKey = `${srcLow || ''}:${src}`
@@ -148,7 +141,6 @@ export function ProgressiveImg({
   }, [srcLow, src, highImageLoaded])
 
   useEffect(() => {
-    const currentImageKey = `${srcLow || ''}:${src}`
     let cancelled = false
 
     // Проверяем, не загружено ли изображение уже (из кэша браузера)

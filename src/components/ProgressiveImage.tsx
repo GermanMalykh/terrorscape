@@ -33,7 +33,6 @@ export function ProgressiveImage({
   const [highImageSrc, setHighImageSrc] = useState<string>('')
   const imgRef = useRef<HTMLImageElement | null>(null)
   const lowImgRef = useRef<HTMLImageElement | null>(null)
-  const highImgDOMRef = useRef<HTMLImageElement | null>(null)
   const imageKeyRef = useRef<string>('')
 
   // Используем low-версию, если она предоставлена, иначе используем основное изображение
@@ -169,7 +168,6 @@ export function ProgressiveImage({
   }, [srcLow, src, highImageLoaded])
 
   useEffect(() => {
-    const currentImageKey = `${srcLow || ''}:${src}`
     let cancelled = false
 
     // Загружаем высококачественное изображение параллельно
