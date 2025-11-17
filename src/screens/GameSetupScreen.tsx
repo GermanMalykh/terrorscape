@@ -625,9 +625,9 @@ useEffect(() => {
             </button>
             <div className="killer-hero__layout">
               {killerImagePaths ? (
-                <div
-                  className={`killer-hero__image killer-hero__image--${selectedKiller.id}`}
-                  style={killerImageStyle}
+              <div
+                className={`killer-hero__image killer-hero__image--${selectedKiller.id}`}
+                style={killerImageStyle}
                 >
                   <div
                     style={{

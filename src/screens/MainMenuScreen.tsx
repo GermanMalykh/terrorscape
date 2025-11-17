@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom'
 import { useLanguage } from '../contexts/LanguageContext.tsx'
 import { getImagePaths } from '../utils/imagePaths'
 import { ProgressiveImg } from '../components/ProgressiveImg.tsx'
+import { EmberCanvas } from '../components/EmberCanvas'
+import { useMenuAnimation } from '../hooks/useMenuAnimation.ts'
 
 // Вычисляем пути один раз при загрузке модуля, чтобы избежать повторных вычислений
 const titleRusPaths = getImagePaths('/art/common/title-rus.webp')
@@ -84,6 +86,7 @@ const renderMenuTextWithHighlight = (text: string, seed: string) => {
 
 export function MainMenuScreen() {
   const { t, locale } = useLanguage()
+  const { enabled: menuAnimationEnabled } = useMenuAnimation()
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null)
   const [isInstalled, setIsInstalled] = useState(false)
   const [showIOSInstructions, setShowIOSInstructions] = useState(false)
@@ -153,6 +156,11 @@ export function MainMenuScreen() {
   return (
     <div className="main-menu-stage">
       <div className="main-menu-stage__overlay" aria-hidden="true" />
+      <div className="main-menu-stage__fire" aria-hidden="true" />
+      {/* Эффект тлеющих искр над оверлеем, но под контентом */}
+      <EmberCanvas density={0.8} maxFallSpeed={80} trail={0.05} enabled={menuAnimationEnabled} />
+      {/* Затухание искр к верху экрана */}
+      <div className="main-menu-stage__embers-fade" aria-hidden="true" />
       <div className="screen main-menu">
         <div className="menu-hero">
           <div

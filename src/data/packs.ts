@@ -176,6 +176,13 @@ export const survivorProfiles: SurvivorProfile[] = [
     description: 'Отважный механик, готовый закрыть любую пробоину.',
     image: getAssetPath('/art/survivors/william.webp'),
   },
+  {
+    id: 'george_carpenter',
+    name: 'Джордж Карпентер',
+    codename: 'George Carpenter',
+    description: 'Опытный исследователь древних тайн, не боится столкнуться с неведомым.',
+    image: getAssetPath('/art/survivors/george.webp'),
+  },
 ]
 
 export const packDefinitions: PackDefinition[] = [
@@ -229,7 +236,7 @@ export const packDefinitions: PackDefinition[] = [
       'Неприступный замок на скалистом холме, застывший во времени. Легенды гласят, что его защищают ожившие каменные воины, а хитроумные ловушки превращают замок в каменную тюрьму.',
     includes: {
       killers: [],
-      survivors: [],
+      survivors: ['george_carpenter'],
       sounds: [],
     },
     tags: ['dlc'],

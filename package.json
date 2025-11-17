@@ -6,10 +6,10 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "build:github-pages": "NODE_ENV=production tsc -b && vite build",
+    "build:github-pages": "NODE_ENV=production tsc -b && vite build --mode production",
     "lint": "eslint .",
     "preview": "vite preview",
-    "deploy": "npm run build && gh-pages -d dist"
+    "deploy": "npm run build:github-pages && gh-pages -d dist"
   },
   "dependencies": {
     "react": "^19.1.1",
