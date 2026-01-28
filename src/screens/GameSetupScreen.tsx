@@ -391,6 +391,7 @@ useEffect(() => {
         ['butcher', { position: 'center 5%', size: 'cover' }],
         ['werewolf', { position: 'center 12%', size: 'cover' }],
         ['huntress', { position: 'center 8%', size: 'cover' }],
+        ['queen', { position: '-350px center', size: 'cover' }],
       ]),
     [],
   )
@@ -645,7 +646,11 @@ useEffect(() => {
                       inset: 0,
                       zIndex: 0,
                     }}
-                    backgroundPosition={killerImagePresets.get(selectedKiller.id)?.position ?? 'center'}
+                    backgroundPosition={
+                      selectedKiller.id === 'queen' && isMobileLayout
+                        ? 'center'
+                        : (killerImagePresets.get(selectedKiller.id)?.position ?? 'center')
+                    }
                     backgroundSize={killerImagePresets.get(selectedKiller.id)?.size ?? 'cover'}
                   />
                 </div>
